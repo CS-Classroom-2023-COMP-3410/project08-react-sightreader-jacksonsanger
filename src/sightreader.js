@@ -68,8 +68,6 @@ const loaded_filename_display = document.querySelector('#loaded-filename');
 const qpm_display = document.querySelector('#qpm-display');
 const auto_continue = document.querySelector('#auto-continue');
 const ignore_duration = document.querySelector('#ignore-duration');
-const profile_select = document.querySelector('#profiles');
-const create_new_profile_input = document.querySelector('#newProfile');
 
 window.start_button = start_button;
 
@@ -223,7 +221,7 @@ function refresh_countdown() {
 
 function load_playlist_file(filename) {
     $.ajax({
-        url: 'playlist/' + filename,
+        url: 'music/' + filename,
         dataType: 'json',
         success: function (data, textStatus, jqXHR) {
             var playlist = $('#' + playlist_display.id);
@@ -256,14 +254,18 @@ function load_abc_file(filename) {
     }
     loaded_filename_display.textContent = '';
     $.ajax({
-        url: filename,
+        url: "music/" + filename,
         dataType: 'text',
         success: function (data, textStatus, jqXHR) {
             original_loaded_abc = data;
             loaded_abc_filename = filename;
             loaded_filename_display.textContent = filename;
-            $('#abc-textarea').val(data);
-            load_abc(data);
+
+            // Preprocess the ABC file
+            const preprocessedData = preprocess_abc(data);
+
+            $('#abc-textarea').val(preprocessedData);
+            load_abc(preprocessedData);
             $(file_select.id).removeAttr('disabled');
             report_status('File loaded. Press start to play.');
             update_start_button();
@@ -275,6 +277,36 @@ function load_abc_file(filename) {
     });
 }
 
+function preprocess_abc(data) {
+    const lines = data.split('\n');
+    const headers = [];
+    const notes = [];
+
+    const ignoredHeaders = new Set(['T', 'C', 'Z', 'S', 'N', 'G', 'O', 'H', 'I', 'P', 'W', 'F', 'B']);
+
+    for (let line of lines) {
+        line = line.trim();
+
+        // Ignore empty lines and comments
+        if (!line || line.startsWith('%')) {
+            continue;
+        }
+
+        // Check if line is a metadata header
+        if (line.length >= 2 && line[1] === ':' && /^[A-Za-z]$/.test(line[0])) {
+            if (ignoredHeaders.has(line[0].toUpperCase())) {
+                continue; // Ignore specific headers
+            }
+            headers.push(line);
+        } else {
+            notes.push(line);
+        }
+    }
+
+    return headers.join('\n') + '\n' + notes.join('\n');
+}
+
+
 function load_abc_textarea() {
     loaded_filename_display.textContent = '';
     data = $('#abc-textarea').val();
@@ -285,7 +317,6 @@ function load_abc_textarea() {
     if(tunebook && tunebook[0].lines.length > 0) {
         loaded_abc_filename = tunebook[0].metaText.title;
         report_status('File loaded. Press start to play.');
-        update_score_stats_display();
     } else {
         report_status('Invalid ABC text. Please try again.');
     }
@@ -443,8 +474,6 @@ function event_callback(event) {
         stop_note_checker();
         var score = get_score_percent();
         report_status('Scored ' + score + '.');
-        record_score(score);
-        update_score_stats_display();
         stop(false);
         setTimeout(reset, 100);
         // If auto-continue is enabled and our last score was greater or equall to the average, then immediately start playing next.
@@ -510,7 +539,7 @@ function update_score_display() {
     var el = $('#' + current_score_display.id);
     reset_score_display_style();
     if (notes_checked_count) {
-        percent = get_score_percent();
+        let percent = get_score_percent();
         el.text('' + notes_checked_correct_count + '/' + notes_checked_count + ' = ' + percent + '%');
         if (current_score_stats && current_score_stats.mean_score) {
             if (percent >= current_score_stats.mean_score) {
@@ -595,19 +624,6 @@ function update_current_note_display() {
 }
 window.update_current_note_display = update_current_note_display;
 
-function record_score(score) {
-    $.ajax({
-        url: 'score/set/' + loaded_abc_filename + '/' + score + '/' + current_qpm + '/' + profile_select.value,
-        dataType: 'text',
-        success: function (data, textStatus, jqXHR) {
-            console.log('Score saved!');
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log('Error saving score!');
-        },
-    });
-}
-
 function scroll_left() {
     scroll_offset -= 100;
     scroll_offset = Math.max(scroll_offset, 0);
@@ -687,44 +703,6 @@ auto_continue.addEventListener('click', async (e) => {
 ignore_duration.addEventListener('click', async (e) => {
     Cookies.set(ignore_duration.id, is_ignore_duration() ? 1 : 0);
 });
-
-// profile_select.addEventListener('change', async (e) => {
-//     if(e.target.value == 'new'){
-//         $('#'+profile_select.id).hide();
-//         $('#'+create_new_profile_input.id).show();
-//     }else{
-//         Cookies.set(profile_select.id, profile_select.value);
-//         $('#'+profile_select.id).show();
-//         $('#'+create_new_profile_input.id).hide();
-//         update_score_stats_display();
-//     }
-// });
-
-// create_new_profile_input.addEventListener('keydown', async (e) => {
-//     //console.log(event.keyCode)
-//     if (event.keyCode == 27) {
-//         // Escape.
-//         create_new_profile_input.value = '';
-//         $('#'+profile_select.id).show();
-//         $('#'+create_new_profile_input.id).hide();
-//     }else if (event.keyCode == 13) {
-//         $.ajax({
-//             url: '/profile/save/'+create_new_profile_input.value,
-//             dataType: 'json',
-//             success: function (data, textStatus, jqXHR) {
-//                 console.log('Success saving profile!');
-//                 $('#'+profile_select.id).append('<option value="'+create_new_profile_input.value+'">'+create_new_profile_input.value+'</option>');
-//                 profile_select.value = create_new_profile_input.value;
-//                 $('#'+profile_select.id).show();
-//                 create_new_profile_input.value = '';
-//                 $('#'+create_new_profile_input.id).hide();
-//             },
-//             error: function (jqXHR, textStatus, errorThrown) {
-//                 console.log('Error saving profile!');
-//             },
-//         });
-//     }
-// });
 
 
 // Runs whenever a different audio input device is selected by the user.
@@ -825,8 +803,6 @@ tune_button.addEventListener('click', () => {
 tempo_select.addEventListener('change', () => {
     if (loaded_abc) {
         load_abc(original_loaded_abc);
-        // Score is kept separately for each tempo, so we have to update our stats whenever the tempo changes.
-        update_score_stats_display();
     }
 });
 
