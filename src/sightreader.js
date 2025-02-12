@@ -1,6 +1,6 @@
 const ABC_EXT = '.abc';
 const PLS_EXT = '.pls';
-const Pitchfinder = require('pitchfinder');
+import * as Pitchfinder from 'pitchfinder';
 let detectPitch = null;
 // const detectPitch = new Pitchfinder.AMDF(); // .YIN() confuses B3 with B4?
 
@@ -256,7 +256,7 @@ function load_abc_file(filename) {
     }
     loaded_filename_display.textContent = '';
     $.ajax({
-        url: 'abc/single/' + filename,
+        url: filename,
         dataType: 'text',
         success: function (data, textStatus, jqXHR) {
             original_loaded_abc = data;
@@ -267,7 +267,6 @@ function load_abc_file(filename) {
             $(file_select.id).removeAttr('disabled');
             report_status('File loaded. Press start to play.');
             update_start_button();
-            update_score_stats_display();
         },
         error: function (jqXHR, textStatus, errorThrown) {
             report_status('Unable to load file.');
@@ -304,7 +303,7 @@ function milliseconds_per_measure(qpm, tune) {
 
 // https://newt.phys.unsw.edu.au/jw/notes.html
 function midi_number_to_octave(number) {
-    octave = parseInt(number / 12) - 1;
+    let octave = parseInt(number / 12) - 1;
     return octave;
 }
 window.midi_number_to_octave = midi_number_to_octave;
@@ -681,24 +680,6 @@ function update_playlist() {
 }
 window.update_playlist = update_playlist;
 
-function update_score_stats_display() {
-    $.ajax({
-        url: 'score/get/' + loaded_abc_filename + '/' + current_qpm + '/' + profile_select.value,
-        dataType: 'json',
-        success: function (data, textStatus, jqXHR) {
-            current_score_stats = data;
-            score_stats_display.textContent = '';
-            if (data.most_recent_scores.length) {
-                score_stats_display.textContent = '' + data.min_score + '/' + data.mean_score + '/' + data.max_score;
-            }
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log('Error retrieving score statistics!');
-        },
-    });
-}
-window.update_score_stats_display = update_score_stats_display;
-
 auto_continue.addEventListener('click', async (e) => {
     Cookies.set(auto_continue.id, is_auto_continue() ? 1 : 0);
 });
@@ -707,43 +688,43 @@ ignore_duration.addEventListener('click', async (e) => {
     Cookies.set(ignore_duration.id, is_ignore_duration() ? 1 : 0);
 });
 
-profile_select.addEventListener('change', async (e) => {
-    if(e.target.value == 'new'){
-        $('#'+profile_select.id).hide();
-        $('#'+create_new_profile_input.id).show();
-    }else{
-        Cookies.set(profile_select.id, profile_select.value);
-        $('#'+profile_select.id).show();
-        $('#'+create_new_profile_input.id).hide();
-        update_score_stats_display();
-    }
-});
+// profile_select.addEventListener('change', async (e) => {
+//     if(e.target.value == 'new'){
+//         $('#'+profile_select.id).hide();
+//         $('#'+create_new_profile_input.id).show();
+//     }else{
+//         Cookies.set(profile_select.id, profile_select.value);
+//         $('#'+profile_select.id).show();
+//         $('#'+create_new_profile_input.id).hide();
+//         update_score_stats_display();
+//     }
+// });
 
-create_new_profile_input.addEventListener('keydown', async (e) => {
-    //console.log(event.keyCode)
-    if (event.keyCode == 27) {
-        // Escape.
-        create_new_profile_input.value = '';
-        $('#'+profile_select.id).show();
-        $('#'+create_new_profile_input.id).hide();
-    }else if (event.keyCode == 13) {
-        $.ajax({
-            url: '/profile/save/'+create_new_profile_input.value,
-            dataType: 'json',
-            success: function (data, textStatus, jqXHR) {
-                console.log('Success saving profile!');
-                $('#'+profile_select.id).append('<option value="'+create_new_profile_input.value+'">'+create_new_profile_input.value+'</option>');
-                profile_select.value = create_new_profile_input.value;
-                $('#'+profile_select.id).show();
-                create_new_profile_input.value = '';
-                $('#'+create_new_profile_input.id).hide();
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.log('Error saving profile!');
-            },
-        });
-    }
-});
+// create_new_profile_input.addEventListener('keydown', async (e) => {
+//     //console.log(event.keyCode)
+//     if (event.keyCode == 27) {
+//         // Escape.
+//         create_new_profile_input.value = '';
+//         $('#'+profile_select.id).show();
+//         $('#'+create_new_profile_input.id).hide();
+//     }else if (event.keyCode == 13) {
+//         $.ajax({
+//             url: '/profile/save/'+create_new_profile_input.value,
+//             dataType: 'json',
+//             success: function (data, textStatus, jqXHR) {
+//                 console.log('Success saving profile!');
+//                 $('#'+profile_select.id).append('<option value="'+create_new_profile_input.value+'">'+create_new_profile_input.value+'</option>');
+//                 profile_select.value = create_new_profile_input.value;
+//                 $('#'+profile_select.id).show();
+//                 create_new_profile_input.value = '';
+//                 $('#'+create_new_profile_input.id).hide();
+//             },
+//             error: function (jqXHR, textStatus, errorThrown) {
+//                 console.log('Error saving profile!');
+//             },
+//         });
+//     }
+// });
 
 
 // Runs whenever a different audio input device is selected by the user.
@@ -918,11 +899,6 @@ $(document).ready(function () {
     cb = parseInt(Cookies.get(ignore_duration.id));
     if (!isNaN(cb)) {
         $('#' + ignore_duration.id).prop('checked', cb);
-    }
-    // Load saved selected profile.
-    cb = Cookies.get(profile_select.id);
-    if (cb) {
-        profile_select.value = cb;
     }
     // Load saved selected file.
     cb = Cookies.get(file_select.id);
