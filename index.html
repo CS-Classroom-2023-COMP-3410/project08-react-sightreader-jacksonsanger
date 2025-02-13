@@ -10,129 +10,13 @@
     <link rel="stylesheet" href="/css/sightreader.css">
   </head>
   <body>
-    <div class="container">
-        <h3>ABC Sightreader</h3>
-    </div>
-    <div class="container">
-        <div class="row-fluid">
-            <div class="span12" id="status" title="Status">1. Select your mic 2. Select your ABC file 3. Press start</div>
-        </div>
-        <div class="row-fluid controls">
-            <div class="span12">
-                <label for="devices">Microphone:</label>
-                <select id="devices"></select>
-
-                <label for="file">File:</label>
-                <select id="file">
-                    <option value="">---Custom ABC---</option>
-                    <option value="beginner.pls"> Beginner</option>
-                    <option value="cecilio-lesson1-open-strings.abc">Cecilio Lesson 1 - Open String</option>
-                    <option value="cecilio-lesson2-first-position.abc">Cecilio Lesson 2 - First Position</option>
-                    <option value="cecilio-lesson2-twinkle-twinkle-little-star.abc">Cecilio Lesson 2 - Twinkle, Twinkle Little Star</option>
-                    <option value="cecilio-lesson3-exercise-1.abc">Cecilio Lesson 3 - Exercise 1</option>
-                    <option value="cecilio-lesson3-exercise-2.abc">Cecilio Lesson 3 - Exercise 2</option>
-                    <option value="cecilio-lesson3-exercise-3.abc">Cecilio Lesson 3 - Exercise 3</option>
-                    <option value="cecilio-lesson3-exercise-4.abc">Cecilio Lesson 3 - Exercise 4</option>
-                    <option value="cecilio-lesson3-jingle-bells.abc">Cecilio Lesson 3 - Jingle Bells</option>
-                    <option value="cecilio-lesson3-mary-had-a-little-lamb.abc">Cecilio Lesson 3 - Mary Had A Little Lamb</option>
-                    <option value="cecilio-lesson4-camptown-races.abc">Cecilio Lesson 4 - Camptown Races</option>
-                    <option value="cecilio-lesson4-lightly-row"> Cecilio Lesson 4 - Lightly Row</option>
-                    <option value="cecilio-lesson4-russian-dance-tune.abc">Cecilio Lesson 4 - Russian Dance Tune</option>
-                    <option value="cecilio-lesson5-eighth-notes.abc">Cecilio Lesson 5 - Eighth Notes</option>
-                    <option value="cecilio-lesson5-hungarian-folk-song-1.abc">Cecilio Lesson 5 - Hungarian Folk Song 1</option>
-                    <option value="cecilio-lesson5-the-old-gray-goose.abc">Cecilio Lesson 5 - The Old Gray Goose</option>
-                    <option value="cecilio-lesson6-first-position-d-string.abc">Cecilio Lesson 6 - First Position D String</option>
-                    <option value="cecilio-lesson6-ode-to-joy.abc">Cecilio Lesson 6 - Ode To Joy</option>
-                    <option value="cecilio-lesson6-scherzando.abc">Cecilio Lesson 6 - Scherzando</option>
-                    <option value="cecilio-lesson7-can-can.abc">Cecilio Lesson 7 - Can Can</option>
-                    <option value="cecilio-lesson7-country-gardens.abc">Cecilio Lesson 7 - Country Gardens</option>
-                    <option value="cecilio-lesson7-gavotte.abc">Cecilio Lesson 7 - Gavotte</option>
-                    <option value="cecilio-lesson8-dixie.abc">Cecilio Lesson 8 - Dixie</option>
-                    <option value="cecilio-lesson8-largo.abc">Cecilio Lesson 8 - Largo</option>
-                    <option value="hot-cross-buns.abc">Hot Cross Buns</option>
-                    <option value="lesson1-open-string-exercise-1.abc">Lesson 1 - Open String Exercise 1</option>
-                    <option value="lesson1-open-string-exercise-2.abc">Lesson 1 - Open String Exercise 2</option>
-                    <option value="lesson1-open-string-exercise-3.abc">Lesson 1 - Open String Exercise 3</option>
-                    <option value="lesson1-open-string-exercise-4.abc">Lesson 1 - Open String Exercise 4</option>
-                    <option value="lesson1-open-string-exercise-5.abc">Lesson 1 - Open String Exercise 5</option>
-                    <option value="lesson1-open-string-exercise-6.abc">Lesson 1 - Open String Exercise 6</option>
-                    <option value="lesson2-1st-finger-exercise-1.abc">Lesson 2 - 1st Finger Exercise 1</option>
-                    <option value="lesson2-1st-finger-exercise-2.abc">Lesson 2 - 1st Finger Exercise 2</option>
-                    <option value="lesson2-1st-finger-exercise-3.abc">Lesson 2 - 1st Finger Exercise 3</option>
-                    <option value="lesson2-1st-finger-exercise-4.abc">Lesson 2 - 1st Finger Exercise 4</option>
-                    <option value="lesson2-1st-finger-exercise-5.abc">Lesson 2 - 1st Finger Exercise 5</option>
-                    <option value="lesson2-1st-finger-exercise-6.abc">Lesson 2 - 1st Finger Exercise 6</option>
-                </select>
-
-                <label for="tempo">Tempo:</label>
-                <select id="tempo">
-                    <option value="">inherit</option>
-                    <option value="30">30</option>
-                    <option value="60">60</option>
-                    <option value="90">90</option>
-                    <option value="120">120</option>
-                    <option value="180">180</option>
-                    <option value="240">240</option>
-                </select>
-                <button id="start" disabled="disabled" title="Enable mic and begin playing along to sheet music.">Start</button>
-                <button id="reset">Reset</button>
-                <button id="tune" title="Enable mic and show pitch but don't play a game.">Tune</button>
-            </div>
-        </div>
-        <div class="row-fluid" id='abc-textarea-container'>
-            <div class="span-12">
-                <textarea id="abc-textarea"></textarea>
-            </div>
-        </div>
-        <div class="row-fluid main-display">
-            <div class="row-fluid top-info">
-                <div id="current-playlist-position" title="Playlist position." class="span4 left">-</div>
-                <div id="qpm-display" title="QPM" class="span4 center">-</div>
-                <div class="span4 right">
-                    <span id="current-score" title="Your current score.">-</span>
-                    <span id="score-stats" title="Score statistics."></span>
-                </div>
-            </div>
-            <div class="span12" id="notation"></div>
-            <span id="current-note" title="Expected and actual note detected on the microphone.">-</span>
-            <span id="current-volume" title="Microphone volume.">-</span>
-            <div id="midi" style="display:none;"></div>
-            <span id="count-down"></span>
-            <span id="loaded-filename">-</span>
-        </div>
-        <div class="row-fluid controls">
-            <div class="span12 keyboard-legend">
-                <span class="cb-field">
-                    <input id="auto-continue" type="checkbox" />
-                    <label for="auto-continue" title="Once score is above average, immediately move on to next playlist item.">Auto-Continue</label>
-                </span>
-                <span class="cb-field">
-                    <input id="ignore-duration" type="checkbox" />
-                    <label for="ignore-duration" title="If checked, will score a note if it's met and will not check duration.">Ignore Duration</label>
-                </span>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <div class="span12">
-                <ol id="playlist" class="list-group"></ol>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="message-model" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body" style="text-align:center;"></div>
-            </div>
-        </div>
-    </div>
-
+    <div id="root"></div>
     <script src="/js/jquery-3.3.1.min.js" type="text/javascript"></script>
     <script src="/js/js.cookie.min.js" type="text/javascript"></script>
     <script src="/js/volume-meter.js" type="text/javascript"></script>
     <script src="/js/pitchdetector.js" type="text/javascript"></script>
     <script src="/js/abcjs_midi_6.0.0-beta.25-min.js" type="text/javascript"></script>
     <script src="/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="src/main.js" type="module"></script>
+    <script src="src/main.jsx" type="module"></script>
   </body>
 </html>
