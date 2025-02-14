@@ -1,5 +1,5 @@
 import React from "react";
-import Sightreader from "./components/Sightreader.jsx"
+import Sightreader from "./components/SightReader.jsx"
 
 const App = () => {
   return (

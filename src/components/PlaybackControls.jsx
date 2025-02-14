@@ -1,20 +1,12 @@
 import React from "react";
 
-const PlaybackControls = ({ isRecording, setIsRecording, setExpectedMidi, setScore }) => {
-  const startPlayback = () => {
-    setIsRecording(true);
-    setExpectedMidi(60); // Example expected MIDI
-    setScore({ correct: 0, total: 0 });
-  };
-
-  const stopPlayback = () => {
-    setIsRecording(false);
-  };
+const PlaybackControls = ({ isPlaying, setIsPlaying }) => {
+  const togglePlayback = () => setIsPlaying((prev) => !prev);
 
   return (
-    <div className="playback-controls">
-      <button onClick={startPlayback} disabled={isRecording}>Start</button>
-      <button onClick={stopPlayback}>Stop</button>
+    <div>
+      <button onClick={togglePlayback}>{isPlaying ? "Stop" : "Start"}</button>
+      <button onClick={() => setIsPlaying(false)}>Reset</button>
     </div>
   );
 };
