@@ -1,77 +1,124 @@
-import React, { useEffect, useState } from "react";
-import * as Pitchfinder from 'pitchfinder';
+import React, { useEffect, useState, useRef } from "react";
+import * as Pitchfinder from "pitchfinder";
 
-const PitchDetector = ({ setCurrentMidi }) => {
+const MIN_VOLUME = 0.075; // Minimum volume threshold to ignore background noise
+
+const PitchDetector = ({ setCurrentMidi, isMicActive }) => {
   const [audioContext, setAudioContext] = useState(null);
   const [sourceStream, setSourceStream] = useState(null);
-  const [pitchDetector, setPitchDetector] = useState(null);
+  const analyserRef = useRef(null);
+  const volumeMeterRef = useRef(null);
+  const pitchIntervalRef = useRef(null);
+  const [detectedNote, setDetectedNote] = useState("-"); // Stores detected note
 
-  const scales = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-
+  // Note conversion logic
+  const scales = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
   function midi_number_to_scale(number) {
-      return scales[number % 12];
+    return scales[number % 12];
   }
 
   function midi_number_to_octave(number) {
-      let octave = parseInt(number / 12) - 1;
-      return octave;
+    return Math.floor(number / 12) - 1;
   }
 
   function midi_number_to_string(number) {
-    if (number) {
-        return midi_number_to_scale(number) + midi_number_to_octave(number);
+    if (number > 0) {
+      return `${midi_number_to_scale(number)}${midi_number_to_octave(number)}`;
     }
-    return "-";
+    return "-"; // No note detected
   }
 
   function noteFromPitch(frequency) {
-    var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-    return Math.round(noteNum) + 69;
-}
-
-  
+    if (!frequency) return 0;
+    const noteNum = 12 * (Math.log2(frequency / 440)) + 69;
+    return Math.round(noteNum);
+  }
 
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      setSourceStream(stream);
-      const context = new (window.AudioContext || window.webkitAudioContext)();
-      setAudioContext(context);
+    if (!isMicActive) {
+      stopMicrophone();
+      return;
+    }
 
-      const sourceNode = context.createMediaStreamSource(stream);
-      const analyser = context.createAnalyser();
-      sourceNode.connect(analyser);
+    async function startMicrophone() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setSourceStream(stream);
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        setAudioContext(context);
 
-      const detector = new Pitchfinder.YIN({ sampleRate: context.sampleRate });
-      setPitchDetector(() => () => {
-        let current_midi_number = 0;
-        const array32 = new Float32Array(analyser.fftSize);
-        analyser.getFloatTimeDomainData(array32);
-        var freq = detector(array32);
-        // console.log('freq:'+freq)
-        current_midi_number = parseInt(noteFromPitch(freq));
-        console.log(current_midi_number);
-        if (isNaN(current_midi_number)) {
-            current_midi_number = 0;
+        const sourceNode = context.createMediaStreamSource(stream);
+        const analyser = context.createAnalyser();
+        analyser.fftSize = 2048;
+        sourceNode.connect(analyser);
+        analyserRef.current = analyser;
+
+        const detector = new Pitchfinder.YIN({ sampleRate: context.sampleRate });
+
+        startVolumeMeter(sourceNode, context);
+
+        pitchIntervalRef.current = setInterval(() => {
+          const volume = volumeMeterRef.current?.volume || 0;
+          if (volume < MIN_VOLUME) {
+            setCurrentMidi(0);
+            setDetectedNote("-");
+            return;
+          }
+
+          const buffer = new Float32Array(analyser.fftSize);
+          analyser.getFloatTimeDomainData(buffer);
+          const freq = detector(buffer);
+          const midiNumber = noteFromPitch(freq);
+
+          setCurrentMidi(midiNumber);
+          setDetectedNote(midi_number_to_string(midiNumber));
+        }, 100);
+      } catch (error) {
+        console.error("Microphone access error:", error);
+      }
+    }
+
+    startMicrophone();
+
+    return stopMicrophone;
+  }, [isMicActive]);
+
+  function startVolumeMeter(source, context) {
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    source.connect(analyser);
+
+    volumeMeterRef.current = {
+      volume: 0,
+      updateVolume: () => {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
         }
-        current_midi_number = midi_number_to_string(current_midi_number);
-        setCurrentMidi(current_midi_number);
-      });
-    });
-  }, []);
+        volumeMeterRef.current.volume = sum / bufferLength / 255; // Normalize volume
+      },
+    };
 
-  useEffect(() => {
-    if (!pitchDetector) return;
+    setInterval(() => volumeMeterRef.current.updateVolume(), 50);
+  }
 
-    const interval = setInterval(() => {
-      pitchDetector();
-    }, 100);
+  function stopMicrophone() {
+    if (pitchIntervalRef.current) clearInterval(pitchIntervalRef.current);
+    if (audioContext) {
+      audioContext.close();
+      setAudioContext(null);
+    }
+    if (sourceStream) {
+      sourceStream.getTracks().forEach((track) => track.stop());
+      setSourceStream(null);
+    }
+  }
 
-    return () => clearInterval(interval);
-  }, [pitchDetector]);
-
-  return null;
+  return <p>{isMicActive ? `Detected Note: ${detectedNote}` : "Mic is off."}</p>;
 };
 
 export default PitchDetector;

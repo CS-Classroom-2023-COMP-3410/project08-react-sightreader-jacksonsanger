@@ -371,15 +371,19 @@ const Sightreader = () => {
         analyser.getByteTimeDomainData(arrayUInt);
     
         function get_pitch() {
+            var volume = volume_meter.volume;
+            console.log(volume);
+            current_midi_number = 0;
+            if (volume > MIN_VOLUME) {
                 const array32 = new Float32Array(analyser.fftSize);
                 analyser.getFloatTimeDomainData(array32);
                 var freq = detectPitch(array32);
-                console.log(freq);
                 // console.log('freq:'+freq)
                 current_midi_number = parseInt(noteFromPitch(freq));
                 if (isNaN(current_midi_number)) {
                     current_midi_number = 0;
                 }
+            }
             update_current_note_display();
             update_current_volume_display();
         }
