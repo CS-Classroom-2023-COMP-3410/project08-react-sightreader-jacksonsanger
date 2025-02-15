@@ -220,3 +220,29 @@ ol.list-group{
     transform: scale(1.2);
   }
 }
+
+.controlBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Ensures even spacing */
+    gap: 15px; /* Adds some space between elements */
+    flex-wrap: wrap; /* Allows elements to wrap to the next line */
+}
+
+.controlBar div {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Spaces out label and dropdown */
+}
+
+.controlBar select {
+    padding: 5px;
+    font-size: 14px;
+}
+
+.controlBar button {
+    white-space: nowrap; /* Prevents stretching */
+    padding: 5px 15px; /* Adjusts padding */
+    font-size: 14px;
+    height: auto; /* Ensures it matches dropdowns */
+}

@@ -23,17 +23,18 @@ const Sightreader = () => {
   return (
     <div className="container">
       <h3>ABC Sightreader</h3>
-
       <PitchDetector ref={pitchDetectorRef} setCurrentMidi={setCurrentMidi} isMicActive={isMicActive} />
-      <ABCFileSelector setSelectedABC={setSelectedABC} />
-      <Tempo tempo={tempo} setTempo={setTempo} />
+      <div className="controlBar">
+        <ABCFileSelector setSelectedABC={setSelectedABC} />
+        <Tempo tempo={tempo} setTempo={setTempo} />
+      </div>
       {hasMicPermission ? (
-        <button onClick={() => setIsMicActive((prev) => !prev)}>
-          {isMicActive ? "Stop Tuning" : "Tune"}
-        </button>
-      ) : (
-        <p>Microphone permission denied. Please allow microphone access.</p>
-      )}
+          <button onClick={() => setIsMicActive((prev) => !prev)}>
+            {isMicActive ? "Stop Tuning" : "Tune"}
+          </button>
+        ) : (
+          <p>Microphone permission denied. Please allow microphone access.</p>
+        )}
       <StartButton 
         selectedABC={selectedABC} 
         isPlaying={isPlaying} 
