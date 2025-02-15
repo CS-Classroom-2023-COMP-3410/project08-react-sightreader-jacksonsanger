@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ABCFileSelector from "./ABCFileSelector";
-import MusicRenderer from "./MusicRenderer";
 import PitchDetector from "./PitchDetector";
-import ScoreDisplay from "./DisplayMidi";
+import StartButton from "./StartButton";
+import Tempo from "./Tempo";
 
 const Sightreader = () => {
   const [selectedABC, setSelectedABC] = useState(""); // Stores ABC content
   const [currentMidi, setCurrentMidi] = useState(0);
   const [hasMicPermission, setHasMicPermission] = useState(false);
-  const [isMicActive, setIsMicActive] = useState(false); // Tracks mic state
+  const [isMicActive, setIsMicActive] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const pitchDetectorRef = useRef(null); // Ref to control mic
+  const [tempo, setTempo] = useState(30);
 
-  // Request microphone permission on load
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ audio: true })
@@ -21,10 +23,10 @@ const Sightreader = () => {
   return (
     <div className="container">
       <h3>ABC Sightreader</h3>
-      
-      <ABCFileSelector setSelectedABC={setSelectedABC} />
-      <MusicRenderer abcString={selectedABC} />
 
+      <PitchDetector ref={pitchDetectorRef} setCurrentMidi={setCurrentMidi} isMicActive={isMicActive} />
+      <ABCFileSelector setSelectedABC={setSelectedABC} />
+      <Tempo tempo={tempo} setTempo={setTempo} />
       {hasMicPermission ? (
         <button onClick={() => setIsMicActive((prev) => !prev)}>
           {isMicActive ? "Stop Tuning" : "Tune"}
@@ -32,9 +34,13 @@ const Sightreader = () => {
       ) : (
         <p>Microphone permission denied. Please allow microphone access.</p>
       )}
-
-      <PitchDetector setCurrentMidi={setCurrentMidi} isMicActive={isMicActive} />
-      <ScoreDisplay currentMidi={currentMidi} />
+      <StartButton 
+        selectedABC={selectedABC} 
+        isPlaying={isPlaying} 
+        setIsPlaying={setIsPlaying} 
+        pitchDetectorRef={pitchDetectorRef}
+        tempo={tempo}
+      />
     </div>
   );
 };

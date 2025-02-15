@@ -2,19 +2,26 @@ import React, { useState, useEffect } from "react";
 
 const ABCFileSelector = ({ setSelectedABC }) => {
   const [selectedFile, setSelectedFile] = useState("cecilio-lesson1-open-strings.abc");
-  const [fileLoadingMessage, setFileLoadingMessage] = useState(""); // Store the message in state
+  const [fileLoadingMessage, setFileLoadingMessage] = useState("");
+  const [customABC, setCustomABC] = useState("");
+  const [isCustom, setIsCustom] = useState(false);
 
   useEffect(() => {
-    if (!selectedFile) return;
+    if (selectedFile === "custom") {
+      setIsCustom(true);
+      return;
+    }
 
-    setFileLoadingMessage("File Loading..."); // Set the loading message before fetching
+    setIsCustom(false);
+    setFileLoadingMessage("File Loading...");
 
     fetch(`/music/${selectedFile}`)
       .then((res) => res.text())
       .then((data) => {
         const preprocessedData = preprocessABC(data);
         setSelectedABC(preprocessedData);
-        setFileLoadingMessage("File loaded. Press start to play."); // Update the message
+        setCustomABC(preprocessedData); // Keep a copy for custom mode
+        setFileLoadingMessage("File loaded. Press start to play.");
       })
       .catch((error) => {
         console.error("Error loading ABC file:", error);
@@ -43,14 +50,31 @@ const ABCFileSelector = ({ setSelectedABC }) => {
     return headers.join("\n") + "\n" + notes.join("\n");
   };
 
+  const handleABCBlur = () => {
+    setSelectedABC(customABC);
+  };
+
   return (
     <div>
       <p>{fileLoadingMessage}</p>
       <label htmlFor="file">File:</label>
-      <select id="file" onChange={(e) => setSelectedFile(e.target.value)}>
+      <select id="file" value={selectedFile} onChange={(e) => setSelectedFile(e.target.value)}>
         <option value="cecilio-lesson1-open-strings.abc">Cecilio Lesson 1 - Open Strings</option>
         <option value="lesson1-open-string-exercise-1.abc">Lesson 1 - Exercise 1</option>
+        <option value="custom">Custom ABC</option>
       </select>
+
+      {isCustom && (
+        <textarea
+          value={customABC}
+          onChange={(e) => setCustomABC(e.target.value)}
+          onBlur={handleABCBlur}
+          placeholder="Enter ABC notation here..."
+          rows={10}
+          cols={50}
+          style={{ width: "100%", marginTop: "10px", fontFamily: "monospace" }}
+        />
+      )}
     </div>
   );
 };
