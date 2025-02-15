@@ -11,7 +11,12 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
 
   useEffect(() => {
     console.log("Loading ABC Notation...");
-    stopPlaying(); //Stop music when ABC file changes
+    stopPlaying(); // Stop music when ABC file changes
+
+    if (selectedABC.trim() === "") {
+      console.warn("Empty ABC notation. Skipping render.");
+      return;
+    }
 
     const visualObj = ABCJS.renderAbc("notation-hidden", selectedABC, {
       responsive: "resize",
@@ -34,18 +39,22 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
       setTimeout(beginCountdown, 500);
       return;
     }
-  
+
     setIsPlaying(true);
     let beatsPerMeasure = tunebook[0].getBeatsPerMeasure();
-    let count = 1;
-  
-    // Display "1" immediately before interval starts
+    let count = beatsPerMeasure;
+
+    if (pitchDetectorRef?.current?.startMicrophone) {
+      console.log("🎤 Starting microphone...");
+      pitchDetectorRef.current.startMicrophone();
+    }
+
     setCountdown(count);
     console.log(`Countdown starting from ${count}...`);
-  
+
     countdownRef.current = setInterval(() => {
-      count++; //Move to the next number *before* updating state
-      if (count > beatsPerMeasure) { 
+      count--;
+      if (count <= 0) {
         clearInterval(countdownRef.current);
         countdownRef.current = null;
         setCountdown(null);
@@ -57,7 +66,7 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
       }
     }, millisecondsPerBeat(tempo || 60));
   };
-  
+
   const eventCallback = (event) => {
     console.log("Note Event Triggered:", event);
     if (!event) {
@@ -65,9 +74,9 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
       return;
     }
     if (currentEventRef.current) {
-      colorNote(currentEventRef.current, "#000000");
+      colorNote(currentEventRef.current, "#000000"); // Reset previous note to black
     }
-    colorNote(event, "#3D9AFC");
+    colorNote(event, "#3D9AFC"); // Highlight current note blue
     currentEventRef.current = event;
   };
 
@@ -84,11 +93,6 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
     if (!tunebook || tunebook.length === 0) {
       console.error("ERROR: Cannot start playing! Tunebook is empty.");
       return;
-    }
-
-    if (pitchDetectorRef?.current?.stopMicrophone) {
-      console.log("🎤 Stopping microphone to reset...");
-      pitchDetectorRef.current.stopMicrophone();
     }
 
     if (!synthAudioContextRef.current || synthAudioContextRef.current.state === "closed") {
@@ -126,11 +130,6 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
       .then(() => {
         console.log("Synth Primed, Now Playing...");
         synthRef.current.start();
-
-        if (pitchDetectorRef?.current?.startMicrophone) {
-          console.log("🎤 Starting microphone...");
-          pitchDetectorRef.current.startMicrophone();
-        }
       })
       .catch((error) => console.error("Synth Error:", error));
   };
@@ -155,7 +154,7 @@ const StartButton = ({ selectedABC, isPlaying, setIsPlaying, pitchDetectorRef, t
     }
 
     if (currentEventRef.current) {
-      colorNote(currentEventRef.current, "#000000");
+      colorNote(currentEventRef.current, "#000000"); // Reset last highlighted note
     }
   };
 
